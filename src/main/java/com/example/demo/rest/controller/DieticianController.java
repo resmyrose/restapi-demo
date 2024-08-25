@@ -66,6 +66,15 @@ public class DieticianController extends BaseController {
 
 	}
 	
+	@GetMapping(value = "/v1/dieticians")
+	public ResponseEntity<? extends Object> getAllDieticians(HttpServletRequest request) {
+		
+		if (!AuthUtil.hasAdminAccess(request)) {
+			return new ResponseEntity<Collection<Patient>>(HttpStatusCode.valueOf(403));
+		}
+		return ResponseEntity.ok(dieticianRepository.getDieticians());
+	}
+	
 	@GetMapping(value = "/v1/dieticians/{dietician_id}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<Dietician> getDietician(@PathVariable("dietician_id") String dieticianId,
 			HttpServletRequest request) {
@@ -93,7 +102,7 @@ public class DieticianController extends BaseController {
 		Dietician updatedDietician = applyPatch(dietician, dieticianPatch);
 
 		validatorService.validateDietician(updatedDietician);
-        System.out.println("after calling validator...");
+        
 		dieticianRepository.saveDietician(updatedDietician);
 		return ResponseEntity.ok(updatedDietician);
 	}

@@ -21,8 +21,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.repository.PatientRepository;
 import com.example.demo.repository.TestReportRepository;
-import com.example.demo.rest.constants.Morbidity;
-import com.example.demo.rest.constants.TestType;
 import com.example.demo.rest.resource.Patient;
 import com.example.demo.rest.resource.TestReport;
 import com.example.demo.rest.util.AuthUtil;

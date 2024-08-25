@@ -3,12 +3,8 @@ package com.example.demo.rest.resource;
 import java.util.Date;
 import java.util.Map;
 
-import com.example.demo.rest.constants.TestType;
 import com.fasterxml.jackson.annotation.JsonFormat;
-
 import jakarta.validation.constraints.NotNull;
-
-import com.example.demo.rest.constants.Morbidity;
 
 import lombok.Getter;
 import lombok.Setter;
