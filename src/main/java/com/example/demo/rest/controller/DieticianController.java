@@ -29,28 +29,37 @@ import com.example.demo.repository.PatientRepository;
 import com.example.demo.rest.resource.Dietician;
 import com.example.demo.rest.resource.Patient;
 import com.example.demo.rest.util.AuthUtil;
+import com.example.demo.service.JsonSchemaValidatorService;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 
 @Validated
 @RestController
-public class DieticianController {
+public class DieticianController extends BaseController {
 	
 	@Autowired
 	private DieticianRepository dieticianRepository;
 	
 	@Autowired
 	private PatientRepository patientRepository;
+	
+	@Autowired
+	private JsonSchemaValidatorService validatorService;
 
 	@PostMapping(value = "/v1/dieticians", consumes = MediaType.APPLICATION_JSON_VALUE,
 			   produces = MediaType.APPLICATION_JSON_VALUE )
-	public ResponseEntity<Dietician> createDietician(@RequestBody @Valid Dietician dietician,
+	public ResponseEntity<? extends Object> createDietician(@RequestBody @Valid Dietician dietician,
 			HttpServletRequest request) {
 
 		if (!AuthUtil.hasAdminAccess(request)) {
 			return new ResponseEntity<Dietician>(HttpStatusCode.valueOf(403));
+		}
+		
+		if (userNameAlreadyExists(dietician.getEmail(),dieticianRepository, patientRepository)) {
+			return ResponseEntity.status(409).body(buildErrorResponse("email already in use."));
 		}
 
 		return new ResponseEntity<Dietician>(addNewDietician(dietician), HttpStatusCode.valueOf(201));
@@ -71,7 +80,7 @@ public class DieticianController {
 	}
 	
 	@PatchMapping(value = "/v1/dieticians/{dietician_id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Dietician> updateDietician(@PathVariable("dietician_id") String dieticianId,
+	public ResponseEntity<? extends Object> updateDietician(@PathVariable("dietician_id") String dieticianId,
 			@RequestBody JsonNode dieticianPatch,
 			HttpServletRequest request) {
 		Dietician dietician = dieticianRepository.getDieticianById(dieticianId);
@@ -82,9 +91,11 @@ public class DieticianController {
 			return new ResponseEntity<Dietician>(HttpStatusCode.valueOf(403));
 		}
 		Dietician updatedDietician = applyPatch(dietician, dieticianPatch);
-		validateFields(updatedDietician);
+
+		validatorService.validateDietician(updatedDietician);
+        System.out.println("after calling validator...");
 		dieticianRepository.saveDietician(updatedDietician);
-		return ResponseEntity.ok(dietician);
+		return ResponseEntity.ok(updatedDietician);
 	}
 
 
@@ -105,47 +116,41 @@ public class DieticianController {
 		dieticianRepository.deleteDietician(dieticianId);
 		return ResponseEntity.noContent().build();
 	}
-	
-	@ResponseStatus(HttpStatus.BAD_REQUEST)
-	@ExceptionHandler(MethodArgumentNotValidException.class)
-	public Map<String, String> handleValidationExceptions(
-	  MethodArgumentNotValidException ex) {
-	    Map<String, String> errors = new HashMap<>();
-	    ex.getBindingResult().getAllErrors().forEach((error) -> {
-	        String fieldName = ((FieldError) error).getField();
-	        String errorMessage = error.getDefaultMessage();
-	        errors.put(fieldName, errorMessage);
-	    });
-	    return errors;
-	}
-	
-	
-	public void validateFields(@Valid Dietician dietician) {
-		// do nothing
-	}
+
 	
 	private Dietician applyPatch(Dietician dietician, JsonNode dieticianPatch) {
-		if (dieticianPatch.has("firstName")) {
-			dietician.setFirstName(dieticianPatch.get("firstName").asText());
+		try {
+			
+			Dietician dieticianCopy = (Dietician) dietician.clone();
+			
+			if (dieticianPatch.has("firstName")) {
+				dieticianCopy.setFirstName(dieticianPatch.get("firstName").asText());
+			}
+			if (dieticianPatch.has("lastName")) {
+				dieticianCopy.setLastName(dieticianPatch.get("lastName").asText());
+			}
+			if (dieticianPatch.has("contactNumber")) {
+				dieticianCopy.setContactNumber(dieticianPatch.get("lastName").asText());
+			}
+			if (dieticianPatch.has("dateOfBirth")) {
+				dieticianCopy.setDateOfBirth(dieticianPatch.get("dateOfBirth").asText());
+			}
+			if (dieticianPatch.has("hospitalName")) {
+				dieticianCopy.setHospitalName(dieticianPatch.get("hospitalName").asText());
+			}
+			if (dieticianPatch.has("hospitalStreet")) {
+				dieticianCopy.setHospitalStreet(dieticianPatch.get("hospitalStreet").asText());
+			}
+			if (dieticianPatch.has("hospitalCity")) {
+				dieticianCopy.setHospitalCity(dieticianPatch.get("hospitalCity").asText());
+			}
+			
+			return dieticianCopy;
+			
+		} catch (CloneNotSupportedException e) {
+			e.printStackTrace();
 		}
-		if (dieticianPatch.has("lastName")) {
-			dietician.setLastName(dieticianPatch.get("lastName").asText());
-		}
-		if (dieticianPatch.has("contactNumber")) {
-			dietician.setContactNumber(dieticianPatch.get("lastName").asText());
-		}
-		if (dieticianPatch.has("dateOfBirth")) {
-			dietician.setDateOfBirth(dieticianPatch.get("dateOfBirth").asText());
-		}
-		if (dieticianPatch.has("hospitalName")) {
-			dietician.setHospitalName(dieticianPatch.get("hospitalName").asText());
-		}
-		if (dieticianPatch.has("hospitalStreet")) {
-			dietician.setHospitalStreet(dieticianPatch.get("hospitalStreet").asText());
-		}
-		if (dieticianPatch.has("hospitalCity")) {
-			dietician.setHospitalCity(dieticianPatch.get("hospitalCity").asText());
-		}
+		
 		return dietician;
 	}
 	

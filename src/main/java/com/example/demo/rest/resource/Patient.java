@@ -45,4 +45,6 @@ public class Patient {
 	
 	private PatientVitals vitals;
 	
+	//private List<TestReport> testReports;
+	
 }

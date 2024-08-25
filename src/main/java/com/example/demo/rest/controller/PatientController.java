@@ -31,7 +31,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 @RestController
-public class PatientController {
+public class PatientController extends BaseController {
 	
 	@Autowired
 	private DieticianRepository dieticianRepository;
@@ -41,7 +41,7 @@ public class PatientController {
 
 	@PostMapping(value = "/v1/dieticians/{dietician_id}/patients", consumes = MediaType.APPLICATION_JSON_VALUE,
 			   produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Patient> createPatientForDietician(@PathVariable("dietician_id") String dieticianId,
+	public ResponseEntity<? extends Object> createPatientForDietician(@PathVariable("dietician_id") String dieticianId,
 			HttpServletRequest request,
 			@RequestBody @Valid Patient patient) {
 		Dietician dietician = dieticianRepository.getDieticianById(dieticianId);
@@ -49,6 +49,9 @@ public class PatientController {
 			return new ResponseEntity<Patient>(HttpStatusCode.valueOf(404));
 		} else if (!AuthUtil.hasDieticianAccess(request, dietician)) {
 			return new ResponseEntity<Patient>(HttpStatusCode.valueOf(403));
+		}
+		if (userNameAlreadyExists(patient.getEmail(),dieticianRepository, patientRepository)) {
+			return ResponseEntity.status(409).body(buildErrorResponse("email already in use."));
 		}
 		return new ResponseEntity<Patient>(addNewPatient(patient, dieticianId), HttpStatusCode.valueOf(201));
 	}
@@ -97,19 +100,6 @@ public class PatientController {
 			return new ResponseEntity<Collection<Patient>>(HttpStatusCode.valueOf(403));
 		}
 		return ResponseEntity.ok(patientRepository.getPatients());
-	}
-	
-	@ResponseStatus(HttpStatus.BAD_REQUEST)
-	@ExceptionHandler(MethodArgumentNotValidException.class)
-	public Map<String, String> handleValidationExceptions(
-	  MethodArgumentNotValidException ex) {
-	    Map<String, String> errors = new HashMap<>();
-	    ex.getBindingResult().getAllErrors().forEach((error) -> {
-	        String fieldName = ((FieldError) error).getField();
-	        String errorMessage = error.getDefaultMessage();
-	        errors.put(fieldName, errorMessage);
-	    });
-	    return errors;
 	}
 	
 	private Patient addNewPatient(Patient patient, String dieticianId) {

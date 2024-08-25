@@ -32,14 +32,13 @@ public class InMemoryDieticianRepository implements DieticianRepository {
 	@Override
 	public void deleteDietician(String dieticianId) {
 		dieticianStore.remove(dieticianId);
-
 	}
 
 	@Override
 	public Optional<Dietician> getDieticianByEmail(String email) {
 		return dieticianStore.values().stream()
 		.filter(d -> d.getEmail().equals(email))
-		.findAny();
+		.findFirst();
 	}
 
 }

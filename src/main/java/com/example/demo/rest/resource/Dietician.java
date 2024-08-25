@@ -8,7 +8,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class Dietician {
+public class Dietician implements Cloneable {
 
 	private String id;
 	
@@ -40,4 +40,9 @@ public class Dietician {
 	private String hospitalZipCode;
 	
 	private String education;
+	
+	@Override
+	public Object clone() throws CloneNotSupportedException {
+		return super.clone();
+	}
 }

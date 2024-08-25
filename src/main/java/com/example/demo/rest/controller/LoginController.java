@@ -69,11 +69,14 @@ public class LoginController {
 				System.out.println("generated token for patient : "+token);
 				return new ResponseEntity<Map>(Map.of("token", token), HttpStatusCode.valueOf(200));
 			}
+			
+			return new ResponseEntity<Map>(Map.of("error", "invalid login"), HttpStatusCode.valueOf(400));
 
 		} catch (RestException re) {
 			return new ResponseEntity<Map>(Map.of("error", re.getMessage()), HttpStatusCode.valueOf(400));
+		} catch (Exception e) {
+		    return new ResponseEntity<Map>(Map.of("error", "login failed"), HttpStatusCode.valueOf(500));
 		}
-		return new ResponseEntity<Map>(Map.of("error", "login failed"), HttpStatusCode.valueOf(500));
 	}
 
 	private String processPatientLogin(LoginCredentials credentials, Patient patient) throws RestException {
