@@ -29,6 +29,9 @@ public class TestReport {
 	private String location;
 	
 	@NotNull
+	private PatientVitals vitals;
+	
+	@NotNull
 	private Map<String,Float> readings;
 	
 }

@@ -12,7 +12,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class Patient {
+public class Patient implements Cloneable {
 
 	private String id;
 	
@@ -43,8 +43,9 @@ public class Patient {
 	
 	private String cuisineCategory;
 	
-	private PatientVitals vitals;
-	
-	//private List<TestReport> testReports;
+	@Override
+	public Object clone() throws CloneNotSupportedException {
+		return super.clone();
+	}
 	
 }
